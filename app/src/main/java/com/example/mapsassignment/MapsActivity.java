@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Address;
@@ -16,7 +17,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.widget.Toast;
-
+import android.Manifest;
 import androidx.core.app.ActivityCompat;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
@@ -74,6 +75,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,
+
                     Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_COARSE_ACCESS);
             return;
         } else {
@@ -117,6 +119,50 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             });
         }
 
+    }
+
+    public void onRequestPermissionsResult(int requestCode,@NonNull String[] permissions, @NonNull int[] grantResults){
+        switch (requestCode){
+            case REQUEST_COARSE_ACCESS:
+                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    permissionGranted = true;
+                    if(ActivityCompat.checkSelfPermission(this,ACCESS_FINE_LOCATION)
+                        !=PackageManager.PERMISSION_GRANTED
+                        && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED){
+                        return;
+                    }
+                    lm.requestLocationUpdates(LocationManager.GPS_PROVIDER,0,0,locationListener);
+
+                }else{
+                    permissionGranted=false;
+                }
+                break;
+            default:
+                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
+    }
+    @Override
+    public void onPause() {
+        super.onPause();
+
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION}, REQUEST_COARSE_ACCESS);
+            return;
+        } else {
+            // If permissions are granted, proceed with the code
+            permissionGranted = true; // Assuming you intended to set permissionGranted to true here
+
+            if (permissionGranted) {
+                // Check if lm and locationListener are not null before removing updates
+                if (lm != null && locationListener != null) {
+                    lm.removeUpdates(locationListener);
+                }
+            }
+        }
     }
 
     private class MyLocationListener implements LocationListener {
