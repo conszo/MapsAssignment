@@ -1,14 +1,10 @@
 package com.example.mapsassignment;
 
-
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 
-import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
-import androidx.fragment.app.FragmentActivity;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
@@ -17,37 +13,44 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.widget.Toast;
-import android.Manifest;
-import androidx.core.app.ActivityCompat;
+
 import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
+
 import com.example.mapsassignment.databinding.ActivityMapsBinding;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
+
     private ActivityMapsBinding binding;
     final private int REQUEST_COARSE_ACCESS = 123;
     boolean permissionGranted = false;
     LocationManager lm;
     LocationListener locationListener;
 
+    List<com.example.mapsassignment.CleaningEvent> cleaningEvents = new ArrayList<>();
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        binding = ActivityMapsBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
+        //binding = ActivityMapsBinding.inflate(getLayoutInflater());
+        setContentView(R.layout.activity_maps);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -55,117 +58,98 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment.getMapAsync(this);
     }
 
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
+        // Set the default location to Belfast City Airport
+        LatLng defaultLocation = new LatLng(54.617611, -5.8718491);
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 12.0f));
+
         lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         locationListener = new MyLocationListener();
-        if (ActivityCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,
 
-                    Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_COARSE_ACCESS);
+        if (ActivityCompat.checkSelfPermission(MapsActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(MapsActivity.this, android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(MapsActivity.this,
+                    new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION, android.Manifest.permission.ACCESS_FINE_LOCATION},
+                    REQUEST_COARSE_ACCESS);
             return;
         } else {
             permissionGranted = true;
         }
 
 
-        if (permissionGranted) {
-            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-        }
 
-        // Ensure mMap is not null before adding markers or modifying the camera
-        if (mMap != null) {
-            // Add a marker for Belfast City Airport
-            LatLng bca = new LatLng(54.617611, -5.8718491);
-            mMap.addMarker(new MarkerOptions().position(bca).title("Belfast City Airport"));
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(bca, 12.0f));
+        {
+        lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+    }
+        if(mMap !=null)
+    {
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                // Retrieve the associated CleaningEvent from the marker's tag
+                CleaningEvent clickedEvent = (CleaningEvent) marker.getTag();
 
-            mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
-                @Override
-                public void onMapClick(@NonNull LatLng point) {
-                    Geocoder geoCoder = new Geocoder(getBaseContext(), Locale.getDefault());
-                    try {
-                        String placeName = "Titanic Belfast";
-                        List<Address> addresses = geoCoder.getFromLocation(point.latitude, point.longitude, 1);
+                // Check if the tag is not null (to avoid potential issues)
+                if (clickedEvent != null) {
+                    // Launch AddEventActivity with the clicked event
+                    Intent intent = new Intent(MapsActivity.this, AddEventActivity.class);
+                    intent.putExtra("clickedEvent", clickedEvent);
+                    startActivity(intent);
+                }
+
+                // Return true to consume the event and prevent the default behavior
+                return true;
+            }
+        });
+
+        // Set the map click listener
+        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(@NonNull LatLng point) {
+                Geocoder geoCoder = new Geocoder(getBaseContext(), Locale.getDefault());
+                try {
+                    List<Address> addresses = geoCoder.getFromLocation(point.latitude, point.longitude, 1);
+                    if (addresses.size() > 0) {
                         Address address = addresses.get(0);
-                        //String add = "";
 
-                        if (addresses.size() > 0) {
-                            // add +=address.getAddressLine(0) + "\n";
-                            LatLng p = new LatLng(address.getLatitude(), address.getLongitude());
-                            mMap.addMarker(new MarkerOptions().position(p).title(placeName));
-                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(p, 12.0f));
-                        }
-                        //Toast.makeText(getBaseContext(), add, Toast.LENGTH_SHORT).show();
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                        String placeName = "Titanic Belfast";
+
+                        CleaningEvent newEvent = new CleaningEvent();
+                        newEvent.setEventName(placeName);
+                        newEvent.setLocation(point);
+                        cleaningEvents.add(newEvent);
+
+                        // Add a marker for the clicked location
+                        LatLng eventLocation = new LatLng(address.getLatitude(), address.getLongitude());
+                        Marker marker = mMap.addMarker(new MarkerOptions().position(eventLocation).title(placeName));
+
+                        // Set the CleaningEvent as the tag for the marker
+                        marker.setTag(newEvent);
+
+                        // Comment out the next line to allow free movement on the map
+                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(eventLocation, 12.0f));
                     }
-                    // Log.d("DEGUG", "Map Clicked [" + point.latitiude + " / " + point.Longitiude + "]");
-                }
-            });
-        }
-
-    }
-
-    public void onRequestPermissionsResult(int requestCode,@NonNull String[] permissions, @NonNull int[] grantResults){
-        switch (requestCode){
-            case REQUEST_COARSE_ACCESS:
-                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                    permissionGranted = true;
-                    if(ActivityCompat.checkSelfPermission(this,ACCESS_FINE_LOCATION)
-                        !=PackageManager.PERMISSION_GRANTED
-                        && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION)
-                        != PackageManager.PERMISSION_GRANTED){
-                        return;
-                    }
-                    lm.requestLocationUpdates(LocationManager.GPS_PROVIDER,0,0,locationListener);
-
-                }else{
-                    permissionGranted=false;
-                }
-                break;
-            default:
-                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        }
-    }
-    @Override
-    public void onPause() {
-        super.onPause();
-
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION}, REQUEST_COARSE_ACCESS);
-            return;
-        } else {
-            // If permissions are granted, proceed with the code
-            permissionGranted = true; // Assuming you intended to set permissionGranted to true here
-
-            if (permissionGranted) {
-                // Check if lm and locationListener are not null before removing updates
-                if (lm != null && locationListener != null) {
-                    lm.removeUpdates(locationListener);
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
-        }
-    }
 
-    private class MyLocationListener implements LocationListener {
+        });
+    }
+}
+
+
+
+
+
+
+
+private class MyLocationListener implements LocationListener {
 
         @Override
         public void onLocationChanged(@NonNull Location location) {
