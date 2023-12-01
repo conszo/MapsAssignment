@@ -103,8 +103,32 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
                 @Override
                 public void onMapClick(LatLng point) {
-                    // Handle the map click event
-                    Log.d("MapClick", "Map clicked at: " + point.toString());
+                    Log.d("MapClick", "onMapClick called");
+
+                    // Check if cleaningEvents is not null
+                    if (cleaningEvents == null) {
+                        Log.e("MapClick", "cleaningEvents is null");
+                        return;
+                    }
+
+                    Log.d("MapClick", "cleaningEvents size: " + cleaningEvents.size());
+
+                    // Creating new event
+                    CleaningEvent newEvent = new CleaningEvent();
+                    String placeName = "New Marker";
+                    newEvent.setEventName(placeName);
+                    newEvent.setLocation(point);
+                    cleaningEvents.add(newEvent);
+
+                    // Log details for debugging
+                    Log.d("MapClick", "Created new event: " + newEvent.getEventName() + " at " + newEvent.getLocation());
+
+                    // Add a marker for the clicked location
+                    Marker marker = mMap.addMarker(new MarkerOptions().position(point).title(placeName));
+
+                    // Set the CleaningEvent as the tag for the marker
+                    marker.setTag(newEvent);
+
                     // ... rest of your code
 
                     Geocoder geoCoder = new Geocoder(getBaseContext(), Locale.getDefault());
@@ -113,18 +137,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         if (addresses.size() > 0) {
                             Address address = addresses.get(0);
 
-                            String placeName = "New Marker";
-
-                            CleaningEvent newEvent = new CleaningEvent();
-                            newEvent.setEventName(placeName);
-                            newEvent.setLocation(point);
-                            cleaningEvents.add(newEvent);
-
-                            // Add a marker for the clicked location
-                            Marker marker = mMap.addMarker(new MarkerOptions().position(point).title(placeName));
-
-                            // Set the CleaningEvent as the tag for the marker
-                            marker.setTag(newEvent);
+                            // Additional logic if needed
 
                             // Comment out the next line to allow free movement on the map
                             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(point, 12.0f));
@@ -134,6 +147,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     }
                 }
             });
+
 
 
         }
