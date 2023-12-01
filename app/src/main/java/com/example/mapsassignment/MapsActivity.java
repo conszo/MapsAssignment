@@ -2,8 +2,9 @@ package com.example.mapsassignment;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 
-
+import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
@@ -11,9 +12,12 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.widget.Toast;
-
+import android.app.AlertDialog;
+import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
@@ -49,7 +53,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        //binding = ActivityMapsBinding.inflate(getLayoutInflater());
+
         setContentView(R.layout.activity_maps);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -57,6 +61,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
     }
+
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
@@ -79,77 +84,65 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return;
         } else {
             permissionGranted = true;
+            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
         }
 
+        // Request location updates after checking permissions
 
+        if (mMap != null) {
+            mMap.clear(); // Clear existing markers
 
-        {
-        lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-    }
-        if(mMap !=null)
-    {
-        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-            @Override
-            public boolean onMarkerClick(Marker marker) {
-                // Retrieve the associated CleaningEvent from the marker's tag
-                CleaningEvent clickedEvent = (CleaningEvent) marker.getTag();
-
-                // Check if the tag is not null (to avoid potential issues)
-                if (clickedEvent != null) {
-                    // Launch AddEventActivity with the clicked event
-                    Intent intent = new Intent(MapsActivity.this, AddEventActivity.class);
-                    intent.putExtra("clickedEvent", clickedEvent);
-                    startActivity(intent);
-                }
-
-                // Return true to consume the event and prevent the default behavior
-                return true;
+            for (CleaningEvent event : cleaningEvents) {
+                LatLng eventLocation = event.getLocation();
+                String eventName = event.getEventName();
+                Marker marker = mMap.addMarker(new MarkerOptions().position(eventLocation).title(eventName));
+                marker.setTag(event); // Set the CleaningEvent as the tag for the marker
             }
-        });
 
-        // Set the map click listener
-        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
-            @Override
-            public void onMapClick(@NonNull LatLng point) {
-                Geocoder geoCoder = new Geocoder(getBaseContext(), Locale.getDefault());
-                try {
-                    List<Address> addresses = geoCoder.getFromLocation(point.latitude, point.longitude, 1);
-                    if (addresses.size() > 0) {
-                        Address address = addresses.get(0);
+            // Set the map click listener
+            mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+                @Override
+                public void onMapClick(LatLng point) {
+                    // Handle the map click event
+                    Log.d("MapClick", "Map clicked at: " + point.toString());
+                    // ... rest of your code
 
-                        String placeName = "Titanic Belfast";
+                    Geocoder geoCoder = new Geocoder(getBaseContext(), Locale.getDefault());
+                    try {
+                        List<Address> addresses = geoCoder.getFromLocation(point.latitude, point.longitude, 1);
+                        if (addresses.size() > 0) {
+                            Address address = addresses.get(0);
 
-                        CleaningEvent newEvent = new CleaningEvent();
-                        newEvent.setEventName(placeName);
-                        newEvent.setLocation(point);
-                        cleaningEvents.add(newEvent);
+                            String placeName = "New Marker";
 
-                        // Add a marker for the clicked location
-                        LatLng eventLocation = new LatLng(address.getLatitude(), address.getLongitude());
-                        Marker marker = mMap.addMarker(new MarkerOptions().position(eventLocation).title(placeName));
+                            CleaningEvent newEvent = new CleaningEvent();
+                            newEvent.setEventName(placeName);
+                            newEvent.setLocation(point);
+                            cleaningEvents.add(newEvent);
 
-                        // Set the CleaningEvent as the tag for the marker
-                        marker.setTag(newEvent);
+                            // Add a marker for the clicked location
+                            Marker marker = mMap.addMarker(new MarkerOptions().position(point).title(placeName));
 
-                        // Comment out the next line to allow free movement on the map
-                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(eventLocation, 12.0f));
+                            // Set the CleaningEvent as the tag for the marker
+                            marker.setTag(newEvent);
+
+                            // Comment out the next line to allow free movement on the map
+                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(point, 12.0f));
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
                 }
-            }
+            });
 
-        });
+
+        }
     }
-}
 
 
 
+    private class MyLocationListener implements LocationListener {
 
-
-
-
-private class MyLocationListener implements LocationListener {
 
         @Override
         public void onLocationChanged(@NonNull Location location) {
@@ -165,12 +158,73 @@ private class MyLocationListener implements LocationListener {
 
         @Override
         public void onProviderEnabled(@NonNull String provider) {
-            LocationListener.super.onProviderEnabled(provider);
+
         }
 
         @Override
         public void onProviderDisabled(@NonNull String provider) {
-            LocationListener.super.onProviderDisabled(provider);
+            AlertDialog.Builder builder = new AlertDialog.Builder(MapsActivity.this);
+            builder.setMessage("Location provider is disabled. Please enable it to use this feature.")
+                    .setPositiveButton("Open Settings", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                            startActivity(intent);
+                        }
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
         }
     }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == REQUEST_COARSE_ACCESS) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted, perform your location-related operations
+                // e.g., start location updates
+                if (ActivityCompat.checkSelfPermission(MapsActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+                        == PackageManager.PERMISSION_GRANTED) {
+                    lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+                }
+            } else {
+                // Permission denied, handle accordingly
+                // You might want to inform the user or provide an alternative way to use the app
+
+                // Inform the user why the permission is necessary
+                Toast.makeText(MapsActivity.this, "Location permission is required to use this feature.", Toast.LENGTH_SHORT).show();
+
+                // Provide an alternative way or direct the user to the app settings
+                // for them to grant the necessary permission manually
+                // For example, you can show a dialog with a button to open app settings
+                showPermissionDeniedDialog();
+            }
+        }
+    }
+
+    private void showPermissionDeniedDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Permission Denied")
+                .setMessage("Location permission is required to use this feature. Please grant the permission in the app settings.")
+                .setPositiveButton("Open Settings", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        openAppSettings();
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void openAppSettings() {
+        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.parse("package:" + getPackageName()));
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+    }
+
 }
+
+
+

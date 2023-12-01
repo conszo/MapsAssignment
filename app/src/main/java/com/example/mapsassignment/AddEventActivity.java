@@ -47,9 +47,13 @@ public class AddEventActivity extends AppCompatActivity {
                 }
             }
         });
+
+
+        CleaningEvent clickedEvent = (CleaningEvent) getIntent().getSerializableExtra("clickedEvent");
+        if (clickedEvent != null) {
+            // Handle the clicked event as needed
+        }
+
+
     }
 }
-
-
-
-
