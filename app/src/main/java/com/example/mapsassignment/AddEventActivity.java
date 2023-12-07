@@ -1,5 +1,7 @@
 package com.example.mapsassignment;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -23,36 +25,40 @@ public class AddEventActivity extends AppCompatActivity {
 
         // Initialize UI components
         EditText editTextEventName = findViewById(R.id.editTextEventName);
+        EditText editTextEventDate = findViewById(R.id.Date_txt);
+        EditText editTextEventTime = findViewById(R.id.Time_txt);
+        EditText editTextEventLocation = findViewById(R.id.Location_txt);
+        EditText editTextEventGoal = findViewById(R.id.Goal_txt);
 
         Button buttonSaveEvent = findViewById(R.id.buttonSaveEvent);
         buttonSaveEvent.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String eventName = editTextEventName.getText().toString();
+                String eventDate = editTextEventDate.getText().toString();
+                String eventTime = editTextEventTime.getText().toString();
+                String eventLocation = editTextEventLocation.getText().toString();
+                String eventGoal = editTextEventGoal.getText().toString();
 
-                // Make sure the cleaningEvents list is initialized
                 if (cleaningEvents != null) {
-                    // Create a new CleaningEvent
+
                     CleaningEvent newEvent = new CleaningEvent();
                     newEvent.setEventName(eventName);
-
-                    // Add the new event to the list
                     cleaningEvents.add(newEvent);
 
-                    // You can also save the event to a database or perform other actions
-                    // ...
+                    // Intent resultIntent = new Intent();
+                    // resultIntent.putExtra("newEvent", newEvent);
+                    // setResult(Activity.RESULT_OK, resultIntent);
 
-                    // Finish the activity
                     finish();
+
                 }
             }
         });
 
-
-        CleaningEvent clickedEvent = (CleaningEvent) getIntent().getSerializableExtra("clickedEvent");
-        if (clickedEvent != null) {
-            // Handle the clicked event as needed
-        }
+        //  CleaningEvent clickedEvent = (CleaningEvent) getIntent().getSerializableExtra("clickedEvent");
+        //  if (clickedEvent != null) {
+        // }
 
 
     }

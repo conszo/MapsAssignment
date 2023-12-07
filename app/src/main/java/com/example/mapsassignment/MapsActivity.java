@@ -1,8 +1,6 @@
 package com.example.mapsassignment;
 
-import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 
-import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -22,6 +20,7 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
 
+
 import com.example.mapsassignment.databinding.ActivityMapsBinding;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -40,7 +39,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private GoogleMap mMap;
 
-    private ActivityMapsBinding binding;
     final private int REQUEST_COARSE_ACCESS = 123;
     boolean permissionGranted = false;
     LocationManager lm;
@@ -55,8 +53,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         setContentView(R.layout.activity_maps);
-
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -87,8 +83,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
         }
 
-        // Request location updates after checking permissions
-
         if (mMap != null) {
             mMap.clear(); // Clear existing markers
 
@@ -99,8 +93,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 marker.setTag(event); // Set the CleaningEvent as the tag for the marker
             }
 
-            // Set the map click listener
+
             mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+
                 @Override
                 public void onMapClick(LatLng point) {
                     Log.d("MapClick", "onMapClick called");
@@ -129,7 +124,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     // Set the CleaningEvent as the tag for the marker
                     marker.setTag(newEvent);
 
-                    // ... rest of your code
+
 
                     Geocoder geoCoder = new Geocoder(getBaseContext(), Locale.getDefault());
                     try {
@@ -137,21 +132,40 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         if (addresses.size() > 0) {
                             Address address = addresses.get(0);
 
-                            // Additional logic if needed
 
-                            // Comment out the next line to allow free movement on the map
-                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(point, 12.0f));
+
+
+                           // mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(point, 12.0f));
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }
             });
+            mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+                @Override
+                public boolean onMarkerClick(Marker marker) {
+                    // Retrieve the CleaningEvent associated with the clicked marker
+                    CleaningEvent clickedEvent = (CleaningEvent) marker.getTag();
 
+                    // If you have an EventActivity, launch it and pass necessary data
+                    if (clickedEvent != null) {
+                        Intent intent = new Intent(MapsActivity.this, AddEventActivity.class);
+                        intent.putExtra("eventName", clickedEvent.getEventName());
+                        // Add more data as needed
+                        startActivity(intent);
+                    }
 
-
+                    // Return true to consume the click event
+                    return true;
+                }
+            });
         }
     }
+
+
+
+
 
 
 
@@ -160,14 +174,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         @Override
         public void onLocationChanged(@NonNull Location location) {
-            if (location != null) {
-                Toast.makeText(getBaseContext(),
-                        "Current Location : Lat: " + location.getLatitude() +
-                                "Lng: " + location.getLongitude(), Toast.LENGTH_SHORT).show();
+
                 LatLng p = new LatLng(location.getLatitude(), location.getLongitude());
                 mMap.addMarker(new MarkerOptions().position(p).title("Current Location"));
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(p, 12.0f));
-            }
+
         }
 
         @Override
@@ -189,54 +199,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     .show();
         }
     }
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-        if (requestCode == REQUEST_COARSE_ACCESS) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission granted, perform your location-related operations
-                // e.g., start location updates
-                if (ActivityCompat.checkSelfPermission(MapsActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION)
-                        == PackageManager.PERMISSION_GRANTED) {
-                    lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
-                }
-            } else {
-                // Permission denied, handle accordingly
-                // You might want to inform the user or provide an alternative way to use the app
-
-                // Inform the user why the permission is necessary
-                Toast.makeText(MapsActivity.this, "Location permission is required to use this feature.", Toast.LENGTH_SHORT).show();
-
-                // Provide an alternative way or direct the user to the app settings
-                // for them to grant the necessary permission manually
-                // For example, you can show a dialog with a button to open app settings
-                showPermissionDeniedDialog();
-            }
-        }
-    }
-
-    private void showPermissionDeniedDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Permission Denied")
-                .setMessage("Location permission is required to use this feature. Please grant the permission in the app settings.")
-                .setPositiveButton("Open Settings", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        openAppSettings();
-                    }
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
-    }
-
-    private void openAppSettings() {
-        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                Uri.parse("package:" + getPackageName()));
-        intent.addCategory(Intent.CATEGORY_DEFAULT);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
-    }
 
 }
 
