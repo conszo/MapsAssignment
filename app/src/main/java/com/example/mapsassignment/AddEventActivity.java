@@ -3,12 +3,14 @@ package com.example.mapsassignment;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class AddEventActivity extends AppCompatActivity {
@@ -23,6 +25,11 @@ public class AddEventActivity extends AppCompatActivity {
         // Retrieve cleaningEvents from the intent
         cleaningEvents = (List<CleaningEvent>) getIntent().getSerializableExtra("cleaningEvents");
 
+        // Initialize cleaningEvents if null
+        if (cleaningEvents == null) {
+            cleaningEvents = new ArrayList<>();
+        }
+
         // Initialize UI components
         EditText editTextEventName = findViewById(R.id.editTextEventName);
         EditText editTextEventDate = findViewById(R.id.Date_txt);
@@ -34,32 +41,51 @@ public class AddEventActivity extends AppCompatActivity {
         buttonSaveEvent.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String eventName = editTextEventName.getText().toString();
-                String eventDate = editTextEventDate.getText().toString();
-                String eventTime = editTextEventTime.getText().toString();
-                String eventLocation = editTextEventLocation.getText().toString();
-                String eventGoal = editTextEventGoal.getText().toString();
+                try {
+                    String eventName = editTextEventName.getText().toString();
+                    String eventDate = editTextEventDate.getText().toString();
+                    String eventTime = editTextEventTime.getText().toString();
+                    String eventLocation = editTextEventLocation.getText().toString();
+                    String eventGoal = editTextEventGoal.getText().toString();
 
-                if (cleaningEvents != null) {
+                    Log.d("AddEventActivity", "Clicked Save Event");
+                    Log.d("AddEventActivity", "Event Name: " + eventName);
+                    Log.d("AddEventActivity", "Event Date: " + eventDate);
+                    Log.d("AddEventActivity", "Event Time: " + eventTime);
+                    Log.d("AddEventActivity", "Event Location: " + eventLocation);
+                    Log.d("AddEventActivity", "Event Goal: " + eventGoal);
 
-                    CleaningEvent newEvent = new CleaningEvent();
-                    newEvent.setEventName(eventName);
-                    cleaningEvents.add(newEvent);
+                    if (cleaningEvents != null) {
+                        CleaningEvent newEvent = new CleaningEvent(
+                                eventName,
+                                eventDate,
+                                eventTime,
+                                eventLocation,
+                                eventGoal,
+                                getIntent().getDoubleExtra("latitude", 0.0),
+                                getIntent().getDoubleExtra("longitude", 0.0));
 
-                    // Intent resultIntent = new Intent();
-                    // resultIntent.putExtra("newEvent", newEvent);
-                    // setResult(Activity.RESULT_OK, resultIntent);
+                        cleaningEvents.add(newEvent);
 
-                    finish();
+                        Log.d("AddEventActivity", "New event added to cleaningEvents");
 
+                        Intent resultIntent = new Intent();
+                        resultIntent.putExtra("newEvent", newEvent);
+                        resultIntent.putExtra("cleaningEvents", new ArrayList<>(cleaningEvents));
+                        setResult(Activity.RESULT_OK, resultIntent);
+
+                        finish();
+                    } else {
+                        Log.e("AddEventActivity", "CleaningEvents is null");
+                    }
+                } catch (Exception e) {
+                    Log.e("AddEventActivity", "Exception: " + e.getMessage());
+                    e.printStackTrace();
                 }
             }
         });
 
-        //  CleaningEvent clickedEvent = (CleaningEvent) getIntent().getSerializableExtra("clickedEvent");
-        //  if (clickedEvent != null) {
-        // }
-
-
+        // ... (rest of your code)
     }
 }
+
