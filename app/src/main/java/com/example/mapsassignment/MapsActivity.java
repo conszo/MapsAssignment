@@ -72,19 +72,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             permissionGranted = true;
             lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
         }
-
-        // Check if the intent contains the cleaningEvents
-        Intent intent = getIntent();
-        if (intent != null && intent.hasExtra("cleaningEvents")) {
-            ArrayList<CleaningEvent> cleaningEvents = intent.getParcelableArrayListExtra("cleaningEvents");
-
-            // You can now use the cleaningEvents in your MapsActivity
-            for (CleaningEvent event : cleaningEvents) {
-                // Access event properties, e.g., event.getEventName(), event.getLocation(), etc.
-            }
-        }
     }
-
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -121,14 +109,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             String eventName = event.getEventName();
             Marker marker = mMap.addMarker(new MarkerOptions().position(eventLocation).title(eventName));
             marker.setTag(event);
-
-            // Show the info window for the newly added marker
-            if (event.isNewlyAdded()) {
-                marker.showInfoWindow();
-                event.setNewlyAdded(false); // Reset the flag
-            }
         }
     }
+
+    @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
@@ -142,7 +126,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             String eventName = event.getEventName();
             Marker marker = mMap.addMarker(new MarkerOptions().position(eventLocation).title(eventName));
             marker.setTag(event);
-
         }
 
         // Handle map click events
