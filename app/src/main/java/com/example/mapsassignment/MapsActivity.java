@@ -129,9 +129,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         }
     }
-
-
-    @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
@@ -145,6 +142,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             String eventName = event.getEventName();
             Marker marker = mMap.addMarker(new MarkerOptions().position(eventLocation).title(eventName));
             marker.setTag(event);
+
         }
 
         // Handle map click events
