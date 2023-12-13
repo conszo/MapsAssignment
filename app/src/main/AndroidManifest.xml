@@ -19,6 +19,9 @@
         android:theme="@style/Theme.MapsAssignment"
         tools:targetApi="31">
         <activity
+            android:name=".EventDetailsActivity"
+            android:exported="false" />
+        <activity
             android:name=".AddEventActivity"
             android:exported="false" />
         <!--

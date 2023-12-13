@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/textViewEventName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Event Name:"
+        android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/textViewEventDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/textViewEventName"
+        android:layout_marginTop="8dp"
+        android:text="Event Date:"
+        android:textSize="18sp" />
+
+    <!-- Add more TextViews for other event details as needed -->
+
+    <Button
+        android:id="@+id/buttonEditEvent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/textViewEventDate"
+        android:layout_marginTop="16dp"
+        android:text="Edit Event" />
+</RelativeLayout>

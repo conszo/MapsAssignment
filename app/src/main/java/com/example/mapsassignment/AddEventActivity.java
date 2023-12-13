@@ -53,11 +53,12 @@ public class AddEventActivity extends AppCompatActivity {
 
                 // Pass the updated event back to MapsActivity
                 Intent resultIntent = new Intent();
-                resultIntent.putExtra("updatedEvent", currentEvent);
+                resultIntent.putExtra("updatedEvent", currentEvent); // Change to currentEvent
                 setResult(Activity.RESULT_OK, resultIntent);
 
                 finish();
             }
+
         });
 
         // ... (existing code)

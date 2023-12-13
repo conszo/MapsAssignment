@@ -24,6 +24,9 @@ public class CleaningEvent implements Parcelable {
     private String eventTime;
     private String eventLocation;
     private String eventGoal;
+
+    private String eventDetails;  // Added property
+
     private double latitude;
     private double longitude;
 
@@ -56,6 +59,7 @@ public class CleaningEvent implements Parcelable {
         location = in.readParcelable(LatLng.class.getClassLoader());
         eventLocation = in.readString();
         eventGoal = in.readString();
+        eventDetails = in.readString();  // Read the new property
         attendees = in.readInt();
     }
 
@@ -69,6 +73,7 @@ public class CleaningEvent implements Parcelable {
         dest.writeParcelable(location, flags);
         dest.writeString(eventLocation);
         dest.writeString(eventGoal);
+        dest.writeString(eventDetails);  // Write the new property
         dest.writeInt(attendees);
     }
 
@@ -90,6 +95,13 @@ public class CleaningEvent implements Parcelable {
     };
 
     // Getters and Setters
+    public String getEventDetails() {
+        return eventDetails;
+    }
+
+    public void setEventDetails(String eventDetails) {
+        this.eventDetails = eventDetails;
+    }
     public boolean isNewlyAdded() {
         return isNewlyAdded;
     }
@@ -187,11 +199,14 @@ public class CleaningEvent implements Parcelable {
             return ""; // or handle null case appropriately
         }
     }
-   public String getFormattedTime() {
-        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
-        return timeFormat.format(dateTime);
+    public String getFormattedTime() {
+        if (dateTime != null) {
+            SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+            return timeFormat.format(dateTime);
+        } else {
+            return ""; // or handle null case appropriately
+        }
     }
-
     // Full formatted date and time
     public String getFullFormattedDateTime() {
         SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm", Locale.getDefault());

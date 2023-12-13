@@ -29,6 +29,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.example.mapsassignment.LocationHandler;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -87,7 +88,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == ADD_EVENT_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            CleaningEvent updatedEvent = (CleaningEvent) data.getSerializableExtra("updatedEvent");
+            CleaningEvent updatedEvent = data.getParcelableExtra("updatedEvent");
 
             if (updatedEvent != null) {
                 // Update the map with the updated event
@@ -101,6 +102,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
 
+
+
     private void updateMapWithCleaningEvents() {
         EventDbHelper dbHelper = new EventDbHelper(this);
         List<CleaningEvent> events = CleaningEvent.getAllEventsFromDatabase(dbHelper);
@@ -112,11 +115,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Add markers for the retrieved events
         for (CleaningEvent event : events) {
             LatLng eventLocation = event.getLocation();
-            String eventName = event.getEventName();
-            Marker marker = mMap.addMarker(new MarkerOptions().position(eventLocation).title(eventName));
-            marker.setTag(event);
+            if (eventLocation != null) {
+                String eventName = event.getEventName();
+                Marker marker = mMap.addMarker(new MarkerOptions().position(eventLocation).title(eventName));
+                marker.setTag(event);
+            }
         }
     }
+
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
@@ -159,73 +165,39 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 // Check if eventDate and eventTime are not null before combining
                 if (eventDate != null && eventTime != null) {
-                    newEvent.setDateTime(newEvent.combineDateTime(eventDate, eventTime));
+                    newEvent.setDateTime(newEvent.combineDateTime(eventDate, eventTime)); // Assuming combineDateTime is in CleaningEvent
 
-                    // Log details for debugging
-                    Log.d("MapClick", "Created new event: " + newEvent.getEventName() + " at " + newEvent.getLocation());
+                    // ... (rest of your code)
 
-                    // Check if dateTime is not null before calling getFormattedDate()
-                    if (newEvent.getDateTime() != null) {
-                        String formattedDate = newEvent.getFormattedDate();
-                        String formattedTime = newEvent.getFormattedTime();
-                        // Proceed with using formattedDate and formattedTime
-                        Log.d("MapClick", "Formatted Date: " + formattedDate + ", Formatted Time: " + formattedTime);
-                    } else {
-                        // Handle the case where dateTime is null
-                        Log.e("MapClick", "DateTime is null");
-                    }
-
-                    // Add a marker for the clicked location
-                    Marker marker = mMap.addMarker(new MarkerOptions()
-                            .position(point)
-                            .title("New Marker") // Use a default title or customize it as needed
-                            .snippet("Event: " + newEvent.getEventName() +
-                                    "\nDate: " + newEvent.getFormattedDate() +
-                                    "\nTime: " + newEvent.getFormattedTime()));
-
-                    // Set the CleaningEvent as the tag for the marker
-                    marker.setTag(newEvent);
-
-                    updateMapWithCleaningEvents();
-
-
-
-                    Geocoder geoCoder = new Geocoder(getBaseContext(), Locale.getDefault());
-                    try {
-                        List<Address> addresses = geoCoder.getFromLocation(point.latitude, point.longitude, 1);
-                        if (addresses.size() > 0) {
-                            Address address = addresses.get(0);
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
                 } else {
                     Log.e("MapClick", "eventDate or eventTime is null");
                     // Handle the case where either eventDate or eventTime is null
-                    return;
                 }
             }
         });
 
         // Set marker click listener
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            // MapsActivity.java
             @Override
             public boolean onMarkerClick(Marker marker) {
                 // Retrieve the CleaningEvent associated with the clicked marker
                 CleaningEvent clickedEvent = (CleaningEvent) marker.getTag();
 
-                // If you have an AddEventActivity, launch it and pass necessary data
+                // If you have an EventDetailsActivity, launch it and pass necessary data
                 if (clickedEvent != null) {
-                    Intent intent = new Intent(MapsActivity.this, AddEventActivity.class);
+                    Intent intent = new Intent(MapsActivity.this, EventDetailsActivity.class);
                     intent.putExtra("clickedEvent", clickedEvent);
-                    startActivityForResult(intent, ADD_EVENT_REQUEST_CODE);
+                    startActivity(intent);
                 }
 
                 // Return true to consume the click event
                 return true;
             }
+
         });
     }
+
 
 }
 
