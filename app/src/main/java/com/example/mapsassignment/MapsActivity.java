@@ -40,8 +40,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private final int REQUEST_COARSE_ACCESS = 123;
     private boolean permissionGranted = false;
     private List<CleaningEvent> cleaningEvents = new ArrayList<>();
-
     private static final int ADD_EVENT_REQUEST_CODE = 1;
+
+    private String eventDate = "2023-12-31";
+    private String eventTime = "12:00";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,46 +82,39 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Stop location updates when the activity is paused
         locationHandler.stopLocationUpdates();
     }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == ADD_EVENT_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            try {
-                // Handle the result, e.g., update the map
-                List<CleaningEvent> updatedCleaningEvents =
-                        (List<CleaningEvent>) data.getSerializableExtra("cleaningEvents");
+            CleaningEvent updatedEvent = (CleaningEvent) data.getSerializableExtra("updatedEvent");
 
-                if (updatedCleaningEvents != null) {
-                    cleaningEvents = updatedCleaningEvents;
+            if (updatedEvent != null) {
+                // Update the map with the updated event
+                updateMapWithCleaningEvents();
 
-                    // Update the map with the new events
-                    updateMapWithCleaningEvents();
-
-                    Toast.makeText(this, "Event saved successfully", Toast.LENGTH_SHORT).show();
-                } else {
-                    Log.e("onActivityResult", "Updated cleaningEvents is null");
-                }
-            } catch (Exception e) {
-                Log.e("onActivityResult", "Exception: " + e.getMessage());
-                e.printStackTrace();
+                Toast.makeText(this, "Event saved successfully", Toast.LENGTH_SHORT).show();
+            } else {
+                Log.e("onActivityResult", "Updated event is null");
             }
         }
     }
 
-    private void updateMapWithCleaningEvents() {
-        // Clear existing markers
-        if (mMap != null) {
-            mMap.clear();
 
-            // Add markers for the updated cleaningEvents
-            for (CleaningEvent event : cleaningEvents) {
-                LatLng eventLocation = event.getLocation();
-                String eventName = event.getEventName();
-                Marker marker = mMap.addMarker(new MarkerOptions().position(eventLocation).title(eventName));
-                marker.setTag(event);
-            }
+    private void updateMapWithCleaningEvents() {
+        EventDbHelper dbHelper = new EventDbHelper(this);
+        List<CleaningEvent> events = CleaningEvent.getAllEventsFromDatabase(dbHelper);
+        dbHelper.close();
+
+        // Clear existing markers
+        mMap.clear();
+
+        // Add markers for the retrieved events
+        for (CleaningEvent event : events) {
+            LatLng eventLocation = event.getLocation();
+            String eventName = event.getEventName();
+            Marker marker = mMap.addMarker(new MarkerOptions().position(eventLocation).title(eventName));
+            marker.setTag(event);
         }
     }
 
@@ -130,6 +125,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Set the default location to Belfast City Airport
         LatLng defaultLocation = new LatLng(54.617611, -5.8718491);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 12.0f));
+        EventDbHelper dbHelper = new EventDbHelper(this);
+        cleaningEvents = CleaningEvent.getAllEventsFromDatabase(dbHelper);
+        dbHelper.close();
 
         // Add existing markers
         for (CleaningEvent event : cleaningEvents) {
@@ -141,7 +139,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // Handle map click events
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
-            @Override
             public void onMapClick(LatLng point) {
                 Log.d("MapClick", "onMapClick called");
 
@@ -152,36 +149,60 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
 
                 Log.d("MapClick", "cleaningEvents size: " + cleaningEvents.size());
-
-                // Creating new event
                 CleaningEvent newEvent = new CleaningEvent();
-                String placeName = "New Marker";
-                newEvent.setEventName(placeName);
                 newEvent.setLocation(point);
-                cleaningEvents.add(newEvent);
 
-                // Log details for debugging
-                Log.d("MapClick", "Created new event: " + newEvent.getEventName() + " at " + newEvent.getLocation());
+                // Display the AddEventActivity for event details
+                Intent intent = new Intent(MapsActivity.this, AddEventActivity.class);
+                intent.putExtra("newEvent", newEvent);
+                startActivityForResult(intent, ADD_EVENT_REQUEST_CODE);
 
-                // Add a marker for the clicked location
-                Marker marker = mMap.addMarker(new MarkerOptions()
-                        .position(point)
-                        .title(placeName)
-                        .snippet("Event: " + placeName + "\nDate: " + newEvent.getEventDate() + "\nTime: " + newEvent.getEventTime()));
+                // Check if eventDate and eventTime are not null before combining
+                if (eventDate != null && eventTime != null) {
+                    newEvent.setDateTime(newEvent.combineDateTime(eventDate, eventTime));
 
-                // Set the CleaningEvent as the tag for the marker
-                marker.setTag(newEvent);
+                    // Log details for debugging
+                    Log.d("MapClick", "Created new event: " + newEvent.getEventName() + " at " + newEvent.getLocation());
 
-                updateMapWithCleaningEvents();
-
-                Geocoder geoCoder = new Geocoder(getBaseContext(), Locale.getDefault());
-                try {
-                    List<Address> addresses = geoCoder.getFromLocation(point.latitude, point.longitude, 1);
-                    if (addresses.size() > 0) {
-                        Address address = addresses.get(0);
+                    // Check if dateTime is not null before calling getFormattedDate()
+                    if (newEvent.getDateTime() != null) {
+                        String formattedDate = newEvent.getFormattedDate();
+                        String formattedTime = newEvent.getFormattedTime();
+                        // Proceed with using formattedDate and formattedTime
+                        Log.d("MapClick", "Formatted Date: " + formattedDate + ", Formatted Time: " + formattedTime);
+                    } else {
+                        // Handle the case where dateTime is null
+                        Log.e("MapClick", "DateTime is null");
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
+
+                    // Add a marker for the clicked location
+                    Marker marker = mMap.addMarker(new MarkerOptions()
+                            .position(point)
+                            .title("New Marker") // Use a default title or customize it as needed
+                            .snippet("Event: " + newEvent.getEventName() +
+                                    "\nDate: " + newEvent.getFormattedDate() +
+                                    "\nTime: " + newEvent.getFormattedTime()));
+
+                    // Set the CleaningEvent as the tag for the marker
+                    marker.setTag(newEvent);
+
+                    updateMapWithCleaningEvents();
+
+
+
+                    Geocoder geoCoder = new Geocoder(getBaseContext(), Locale.getDefault());
+                    try {
+                        List<Address> addresses = geoCoder.getFromLocation(point.latitude, point.longitude, 1);
+                        if (addresses.size() > 0) {
+                            Address address = addresses.get(0);
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    Log.e("MapClick", "eventDate or eventTime is null");
+                    // Handle the case where either eventDate or eventTime is null
+                    return;
                 }
             }
         });
@@ -197,8 +218,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (clickedEvent != null) {
                     Intent intent = new Intent(MapsActivity.this, AddEventActivity.class);
                     intent.putExtra("clickedEvent", clickedEvent);
-                    intent.putExtra("latitude", clickedEvent.getLocation().latitude);
-                    intent.putExtra("longitude", clickedEvent.getLocation().longitude);
                     startActivityForResult(intent, ADD_EVENT_REQUEST_CODE);
                 }
 
@@ -207,6 +226,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
     }
+
 }
 
 

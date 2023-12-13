@@ -1,16 +1,21 @@
 package com.example.mapsassignment;
 
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Parcel;
 import android.os.Parcelable;
 
 import com.google.android.gms.maps.model.LatLng;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 public class CleaningEvent implements Parcelable {
-    //fields
     private int attendees;
     private String eventName;
     private transient LatLng location;
@@ -24,7 +29,6 @@ public class CleaningEvent implements Parcelable {
 
     private boolean isNewlyAdded;
 
-    // Constructors
     public CleaningEvent() {
         // Default constructor
     }
@@ -38,8 +42,8 @@ public class CleaningEvent implements Parcelable {
         this.latitude = latitude;
         this.longitude = longitude;
         this.location = new LatLng(latitude, longitude);
-        this.isNewlyAdded =true;
-        // this.dateTime = combineDateTime(eventDate, eventTime);
+        this.isNewlyAdded = true;
+        this.dateTime = combineDateTime(eventDate, eventTime);
     }
 
     // Parcelable implementation
@@ -84,14 +88,6 @@ public class CleaningEvent implements Parcelable {
             return new CleaningEvent[size];
         }
     };
-
-    // Getters and Setters
-    // ... (rest of your existing code) ...
-
-
-
-
-
 
     // Getters and Setters
     public boolean isNewlyAdded() {
@@ -174,13 +170,24 @@ public class CleaningEvent implements Parcelable {
         this.longitude = longitude;
     }
 
-    // Formatted Date and Time
-    public String getFormattedDate() {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault());
-        return dateFormat.format(dateTime);
+    public int getAttendees() {
+        return attendees;
     }
 
-    public String getFormattedTime() {
+    public void setAttendees(int attendees) {
+        this.attendees = attendees;
+    }
+
+    // Formatted Date and Time
+    public String getFormattedDate() {
+        if (dateTime != null) {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault());
+            return dateFormat.format(dateTime);
+        } else {
+            return ""; // or handle null case appropriately
+        }
+    }
+   public String getFormattedTime() {
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
         return timeFormat.format(dateTime);
     }
@@ -191,12 +198,74 @@ public class CleaningEvent implements Parcelable {
         return dateTimeFormat.format(dateTime);
     }
 
-    public int getAttendees() {
-        return attendees;
+    // Combine date and time into a single Date object
+    public Date combineDateTime(String date, String time) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
+        String dateTimeStr = date + " " + time;
+        try {
+            return dateFormat.parse(dateTimeStr);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
-    public void setAttendees(int attendees) {
-        this.attendees = attendees;
+    // Save event to the database
+    public long saveEventToDatabase(EventDbHelper dbHelper) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(EventContract.EventEntry.COLUMN_NAME_EVENT_NAME, eventName);
+        // Add more values as needed
+
+        // Assuming dateTime is not null before saving to the database
+        if (dateTime != null) {
+            values.put(EventContract.EventEntry.COLUMN_NAME_EVENT_DATE, getFormattedDate()); // Adjust column name
+            // Add more date-related values if needed
+        }
+
+        long newRowId = db.insert(EventContract.EventEntry.TABLE_NAME, null, values);
+
+        db.close();
+
+        return newRowId;
+    }
+
+    // Retrieve all events from the database
+    public static List<CleaningEvent> getAllEventsFromDatabase(EventDbHelper dbHelper) {
+        List<CleaningEvent> eventList = new ArrayList<>();
+
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+        String[] projection = {
+                EventContract.EventEntry._ID,
+                EventContract.EventEntry.COLUMN_NAME_EVENT_NAME,
+                EventContract.EventEntry.COLUMN_NAME_EVENT_DATE, // Adjust column name
+                // Add more columns as needed
+        };
+
+        Cursor cursor = db.query(
+                EventContract.EventEntry.TABLE_NAME,
+                projection,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        while (cursor.moveToNext()) {
+            CleaningEvent event = new CleaningEvent();
+            event.setEventName(cursor.getString(cursor.getColumnIndexOrThrow(EventContract.EventEntry.COLUMN_NAME_EVENT_NAME)));
+            event.setEventDate(cursor.getString(cursor.getColumnIndexOrThrow(EventContract.EventEntry.COLUMN_NAME_EVENT_DATE))); // Adjust column name
+            // Set more properties as needed
+            eventList.add(event);
+        }
+
+        cursor.close();
+        db.close();
+
+        return eventList;
     }
 }
 
