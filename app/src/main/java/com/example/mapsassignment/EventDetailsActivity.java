@@ -16,19 +16,24 @@ public class EventDetailsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_event_details);
 
         // Retrieve the CleaningEvent from the intent
-        CleaningEvent clickedEvent = getIntent().getParcelableExtra("clickedEvent");
+        CleaningEvent clickedEvent = getIntent().getParcelableExtra("updatedEvent");
 
         // Populate UI components with event details
         if (clickedEvent != null) {
             TextView textViewEventName = findViewById(R.id.textViewEventName);
             TextView textViewEventDate = findViewById(R.id.textViewEventDate);
+            TextView textViewEventTime = findViewById(R.id.textViewEventTime);
+            TextView textViewEventLocation = findViewById(R.id.textViewEventLocation);
+            TextView textViewEventGoal = findViewById(R.id.textViewEventGoal);
 
             textViewEventName.setText("Event Name: " + clickedEvent.getEventName());
             textViewEventDate.setText("Event Date: " + clickedEvent.getFormattedDate());
-
-            // Add more TextViews and populate them with other event details as needed
+            textViewEventTime.setText("Event Time: " + clickedEvent.getFormattedTime());
+            textViewEventLocation.setText("Event Location: " + clickedEvent.getEventLocation());
+            textViewEventGoal.setText("Event Goal: " + clickedEvent.getEventGoal());
         }
     }
+
 
     // Add the following method to save the event and send it back to MapsActivity
     private void saveEventAndFinish(CleaningEvent updatedEvent) {

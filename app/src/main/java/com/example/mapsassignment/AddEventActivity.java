@@ -22,17 +22,9 @@ import java.util.List;
 
 public class AddEventActivity extends AppCompatActivity {
 
-    private CleaningEvent currentEvent;// Variable to hold the current event
-    private GoogleMap mMap;
+    private CleaningEvent currentEvent; // Variable to hold the current event
     private double latitude;
     private double longitude;
-    public void setGoogleMap(GoogleMap map) {
-        this.mMap = map;
-    }
-    public void setLocationCoordinates(double latitude, double longitude) {
-        this.latitude = latitude;
-        this.longitude = longitude;
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,16 +71,16 @@ public class AddEventActivity extends AppCompatActivity {
                 resultIntent.putExtra("latitude", currentEvent.getLatitude());
                 resultIntent.putExtra("longitude", currentEvent.getLongitude());
 
+                // Pass the entire CleaningEvent to EventDetailsActivity
+                resultIntent.putExtra("updatedEvent", currentEvent);
+
                 setResult(Activity.RESULT_OK, resultIntent);
                 finish();
             }
-
         });
 
         // ... (existing code)
     }
-
-
 
     private void populateUIWithEventDetails() {
         // Populate the UI components with details of the existing event
@@ -122,6 +114,7 @@ public class AddEventActivity extends AppCompatActivity {
         // ... (update other event details as needed)
     }
 }
+
 
 
 

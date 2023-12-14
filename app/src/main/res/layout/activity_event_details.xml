@@ -9,24 +9,47 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="Event Name:"
-        android:textSize="18sp" />
+        android:textSize="18sp"
+        android:textStyle="bold" />
 
     <TextView
         android:id="@+id/textViewEventDate"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/textViewEventName"
+        android:layout_below="@+id/textViewEventName"
         android:layout_marginTop="8dp"
         android:text="Event Date:"
-        android:textSize="18sp" />
+        android:textSize="18sp"
+        android:textStyle="bold" />
 
-    <!-- Add more TextViews for other event details as needed -->
-
-    <Button
-        android:id="@+id/buttonEditEvent"
+    <TextView
+        android:id="@+id/textViewEventTime"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/textViewEventDate"
-        android:layout_marginTop="16dp"
-        android:text="Edit Event" />
+        android:layout_below="@+id/textViewEventDate"
+        android:layout_marginTop="8dp"
+        android:text="Event Time:"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/textViewEventLocation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/textViewEventTime"
+        android:layout_marginTop="8dp"
+        android:text="Event Location:"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/textViewEventGoal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/textViewEventLocation"
+        android:layout_marginTop="8dp"
+        android:text="Event Goal:"
+        android:textSize="18sp"
+        android:textStyle="bold" />
 </RelativeLayout>
+

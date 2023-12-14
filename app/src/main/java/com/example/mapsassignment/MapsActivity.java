@@ -75,6 +75,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             // If permissions are granted, start location updates
             permissionGranted = true;
         }
+
     }
 
     @Override
