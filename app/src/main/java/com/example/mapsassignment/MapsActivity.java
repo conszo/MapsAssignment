@@ -101,9 +101,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-
-
-
     private void updateMapWithCleaningEvents() {
         EventDbHelper dbHelper = new EventDbHelper(this);
         List<CleaningEvent> events = CleaningEvent.getAllEventsFromDatabase(dbHelper);
@@ -116,12 +113,50 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         for (CleaningEvent event : events) {
             LatLng eventLocation = event.getLocation();
             if (eventLocation != null) {
-                String eventName = event.getEventName();
-                Marker marker = mMap.addMarker(new MarkerOptions().position(eventLocation).title(eventName));
+                MarkerOptions markerOptions = new MarkerOptions()
+                        .position(eventLocation)
+                        .title(event.getEventName());
+
+                Marker marker = mMap.addMarker(markerOptions);
                 marker.setTag(event);
             }
         }
+
+        // Set custom info window adapter
+        mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
+            @Override
+            public View getInfoWindow(Marker marker) {
+                return null;  // Use the default info window layout
+            }
+
+            @Override
+            public View getInfoContents(Marker marker) {
+                View view = getLayoutInflater().inflate(R.layout.custom_info_window, null);
+
+                TextView titleTextView = view.findViewById(R.id.infoWindowTitle);
+                TextView snippetTextView = view.findViewById(R.id.infoWindowSnippet);
+
+                // Retrieve the CleaningEvent associated with the marker
+                CleaningEvent event = (CleaningEvent) marker.getTag();
+
+                // Debugging: Log the event details
+                Log.d("InfoContents", "Event: " + event);
+                Log.d("InfoContents", "EventName: " + event.getEventName());
+                Log.d("InfoContents", "EventDate: " + event.getEventDate());
+                Log.d("InfoContents", "EventTime: " + event.getEventTime());
+
+                // Set custom information in the info window
+                if (event != null) {
+                    titleTextView.setText(event.getEventName());
+                    snippetTextView.setText("Date: " + event.getEventDate() + "\nTime: " + event.getEventTime());
+                }
+
+                return view;
+            }
+
+        });
     }
+
 
 
     @Override
@@ -142,9 +177,35 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             Marker marker = mMap.addMarker(new MarkerOptions().position(eventLocation).title(eventName));
             marker.setTag(event);
         }
+        mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
+            @Override
+            public View getInfoWindow(Marker marker) {
+                return null; // Use default info window frame
+            }
 
+            @Override
+            public View getInfoContents(Marker marker) {
+                // Inflate the custom info window layout
+                View view = getLayoutInflater().inflate(R.layout.custom_info_window, null);
+
+                // Retrieve the CleaningEvent associated with the clicked marker
+                CleaningEvent clickedEvent = (CleaningEvent) marker.getTag();
+
+                // Populate the custom info window with event details
+                if (clickedEvent != null) {
+                    TextView titleTextView = view.findViewById(R.id.infoWindowTitle);
+                    TextView snippetTextView = view.findViewById(R.id.infoWindowSnippet);
+
+                    titleTextView.setText(clickedEvent.getEventName());
+                    snippetTextView.setText(clickedEvent.getEventDate() + " " + clickedEvent.getEventTime());
+                }
+
+                return view;
+            }
+        });
         // Handle map click events
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
             public void onMapClick(LatLng point) {
                 Log.d("MapClick", "onMapClick called");
 
@@ -158,22 +219,37 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 CleaningEvent newEvent = new CleaningEvent();
                 newEvent.setLocation(point);
 
-                // Display the AddEventActivity for event details
-                Intent intent = new Intent(MapsActivity.this, AddEventActivity.class);
-                intent.putExtra("newEvent", newEvent);
-                startActivityForResult(intent, ADD_EVENT_REQUEST_CODE);
+                // Check if the location of the new event is not null
+                if (newEvent.getLocation() != null) {
+                    // Add marker for the new event
+                    Marker marker = mMap.addMarker(new MarkerOptions().position(newEvent.getLocation()).title("New Event"));
+                    marker.setTag(newEvent);
 
-                // Check if eventDate and eventTime are not null before combining
-                if (eventDate != null && eventTime != null) {
-                    newEvent.setDateTime(newEvent.combineDateTime(eventDate, eventTime)); // Assuming combineDateTime is in CleaningEvent
+                    // Display the AddEventActivity for event details
+                    Intent intent = new Intent(MapsActivity.this, AddEventActivity.class);
+                    intent.putExtra("latitude", point.latitude);
+                    intent.putExtra("longitude", point.longitude);
+                    intent.putExtra("newEvent", newEvent);
 
-                    // ... (rest of your code)
+                    // Check if eventDate and eventTime are not null before combining
+                    if (eventDate != null && eventTime != null) {
+                        newEvent.setDateTime(newEvent.combineDateTime(eventDate, eventTime)); // Assuming combineDateTime is in CleaningEvent
 
+                        // ... (rest of your code)
+
+                    } else {
+                        Log.e("MapClick", "eventDate or eventTime is null");
+                        // Handle the case where either eventDate or eventTime is null
+                    }
+
+                    startActivityForResult(intent, ADD_EVENT_REQUEST_CODE);
                 } else {
-                    Log.e("MapClick", "eventDate or eventTime is null");
-                    // Handle the case where either eventDate or eventTime is null
+                    Log.e("MapClick", "New event location is null");
                 }
             }
+
+
+
         });
 
         // Set marker click listener

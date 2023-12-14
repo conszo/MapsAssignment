@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Locale;
 
 public class CleaningEvent implements Parcelable {
+    private List<CleaningEvent> cleaningEvents = new ArrayList<>();
+
     private int attendees;
     private String eventName;
     private transient LatLng location;

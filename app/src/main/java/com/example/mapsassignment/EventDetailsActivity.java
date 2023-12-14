@@ -1,6 +1,8 @@
 package com.example.mapsassignment;
 
 // EventDetailsActivity.java
+import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.TextView;
 
@@ -27,4 +29,18 @@ public class EventDetailsActivity extends AppCompatActivity {
             // Add more TextViews and populate them with other event details as needed
         }
     }
+
+    // Add the following method to save the event and send it back to MapsActivity
+    private void saveEventAndFinish(CleaningEvent updatedEvent) {
+        Intent resultIntent = new Intent();
+        resultIntent.putExtra("updatedEvent", updatedEvent);
+        setResult(Activity.RESULT_OK, resultIntent);
+        finish();
+    }
+
+
+    // This method can be called when saving the event in your activity
+    // You can call this method passing the updated event
+    // Example: saveEventAndFinish(updatedEvent);
 }
+
