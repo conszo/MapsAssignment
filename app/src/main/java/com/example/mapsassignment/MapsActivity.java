@@ -153,7 +153,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 return view;
             }
         });
-    }
+    }//hi
     private class InfoWindowAdapter implements GoogleMap.InfoWindowAdapter {
 
         private View view;
