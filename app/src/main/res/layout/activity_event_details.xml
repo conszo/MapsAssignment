@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!-- Event Details TextViews -->
     <TextView
         android:id="@+id/textViewEventName"
         android:layout_width="wrap_content"
@@ -51,5 +52,44 @@
         android:text="Event Goal:"
         android:textSize="18sp"
         android:textStyle="bold" />
+
+    <!-- Edit Event Button -->
+    <Button
+        android:id="@+id/buttonEditEvent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/textViewEventGoal"
+        android:layout_marginTop="16dp"
+        android:text="Edit Event"
+        android:onClick="editEvent" />
+
+    <!-- Additional Information Text Field -->
+    <EditText
+        android:id="@+id/editTextAdditionalInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/buttonEditEvent"
+        android:layout_marginTop="16dp"
+        android:hint="Additional Information" />
+
+    <!-- Attend Event Button -->
+    <Button
+        android:id="@+id/buttonAttendEvent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/editTextAdditionalInfo"
+        android:layout_marginTop="16dp"
+        android:text="Attend Event"
+        android:onClick="attendEvent" />
+
+    <!-- Attendance Count TextView -->
+    <TextView
+        android:id="@+id/textViewAttendanceCount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/buttonAttendEvent"
+        android:layout_marginTop="16dp"
+        android:text="Attendance Count: 0" />
+
 </RelativeLayout>
 
